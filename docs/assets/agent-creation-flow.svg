@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="380" viewBox="0 0 1120 380" role="img" aria-labelledby="title desc">
+<title id="title">From agent draft to city office</title><desc id="desc">The dialog creates a draft. The host page assigns IDs and a free plot, then stores agent data and city layout separately. The canvas displays both. Cancelling discards the draft.</desc>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0L8 4L0 8" fill="none" stroke="#a08bb7"/></marker><style>text{font-family:Arial,Helvetica,sans-serif}.title{font-size:17px;font-weight:700;fill:#35344a}.detail{font-size:12px;fill:#8a8398}.label{font-size:10px;letter-spacing:1.5px;fill:#9b83b5}</style></defs>
+<rect width="1120" height="380" rx="20" fill="#f8f6fb"/>
+<text x="32" y="38" class="label">CREATION FLOW / THE HOST OWNS STATE</text>
+<g fill="#fff" stroke="#e3dcec"><rect x="32" y="100" width="230" height="160" rx="14"/><rect x="322" y="100" width="230" height="160" rx="14"/><rect x="612" y="75" width="210" height="95" rx="14"/><rect x="612" y="195" width="210" height="95" rx="14"/><rect x="882" y="100" width="206" height="160" rx="14"/></g>
+<text x="52" y="131" class="label">01 / DIALOG</text><text x="52" y="162" class="title">AddAgentDialog</text><text x="52" y="190" class="detail">Name + task + appearance</text><text x="52" y="212" class="detail">Live preview, no city mutation</text>
+<text x="342" y="131" class="label">02 / HOST PAGE</text><text x="342" y="162" class="title">onCreate(draft)</text><text x="342" y="190" class="detail">IDs + free plot + road link</text><text x="342" y="212" class="detail">Commit state and close dialog</text>
+<text x="632" y="108" class="title">Agent[]</text><text x="632" y="136" class="detail">Identity, task, runtime status</text><text x="632" y="228" class="title">CityConfig</text><text x="632" y="256" class="detail">Offices, positions, road links</text>
+<text x="902" y="131" class="label">03 / CANVAS</text><text x="902" y="162" class="title">AgentCity</text><text x="902" y="190" class="detail">Buildings + roads + status</text><text x="902" y="212" class="detail">Selection + move callbacks</text>
+<g fill="none" stroke="#a08bb7" stroke-width="1.5" marker-end="url(#arrow)"><path d="M262 180H310"/><path d="M552 180H582V122H600"/><path d="M552 180H582V242H600"/><path d="M822 122H852V160H870"/><path d="M822 242H852V200H870"/></g>
+<text x="32" y="329" class="detail">Cancel / Escape / backdrop → discard the draft. No agent, office, or road is added.</text><text x="32" y="353" class="detail">Visual roads connect buildings. A future server-side execution layer controls actual agent work.</text>
+</svg>

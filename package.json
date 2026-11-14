@@ -1,0 +1,41 @@
+{
+  "name": "creator-studio-city",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "next typegen && tsc --noEmit",
+    "test": "node --test components/agent-city/*.test.mjs",
+    "check": "npm run lint && npm run typecheck && npm test && npm run build:webpack",
+    "build:webpack": "next build --webpack",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "next": "^16.2.6",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "drizzle-orm": "^0.45.2",
+    "lucide-react": "^0.475.0",
+    "postgres": "^3.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.10",
+    "@types/react": "^19.0.10",
+    "@types/react-dom": "^19.0.10",
+    "eslint": "^9.16.0",
+    "eslint-config-next": "^16.2.6",
+    "typescript": "^5.6.3",
+    "@tailwindcss/postcss": "^4.0.0",
+    "drizzle-kit": "^0.31.10",
+    "tailwindcss": "^4.0.0"
+  },
+  "description": "A reusable isometric AI agent city starter built with Next.js, React, and TypeScript.",
+  "engines": {
+    "node": ">=20.9.0"
+  }
+}

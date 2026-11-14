@@ -1,0 +1,15 @@
+.city { position: relative; width: 100%; min-height: 480px; height: 100%; overflow: hidden; border-radius: 20px; background: radial-gradient(ellipse at 50% 35%, #f4f5f7, #e5e8ed); color: #263044; }
+.city > svg { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
+.building { cursor: pointer; }
+.building :global(.lift) { transition: transform .18s; }
+.building:hover :global(.lift) { transform: translateY(-4px); }
+.building :global(.lit) { opacity: 0; }
+.selected :global(.pad-top), .building:has(:focus-visible) :global(.pad-top) { stroke: #7954d4; stroke-width: 3; }
+.building :focus-visible { outline: none; }
+.preview { display: block; width: 100%; max-height: 280px; }
+.controls { position: absolute; bottom: 18px; right: 18px; display: flex; gap: 6px; }
+.controls button { border: 1px solid #d8dde5; background: #fff; color: #354054; padding: 9px 13px; border-radius: 9px; cursor: pointer; }
+.city[data-night], .preview[data-night] { background: radial-gradient(ellipse at 50% 35%, #303e59, #151d2d); }
+[data-night] .building :global(.body) { filter: brightness(.65) saturate(.8); }
+[data-night] .building :global(.lit) { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .building :global(.lift) { transition: none; } }
