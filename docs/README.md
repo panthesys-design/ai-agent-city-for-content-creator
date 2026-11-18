@@ -12,7 +12,10 @@ Build a content creation workspace by composing small UI components around your 
 | Add the components to a page | [Complete integration](integration.md) |
 | Look up a prop or configuration value | [Component API](component-api.md) |
 | Understand the creation and rendering flow | [Architecture](architecture.md) |
-| Choose or customize headquarters | [Headquarters guide](headquarters.md) |
+| Choose or customize headquarters, or change workspace settings | [Headquarters guide](headquarters.md) (see [Settings page](headquarters.md#settings-page)) |
+| Run agents, orchestration, memory, and jobs | [Agent runtime](agent-runtime.md) |
+| Give agents a cloud computer (browser, terminal, files) and let them ask the user | [Cloud computer](cloud-computer.md) |
+| Connect Instagram, YouTube, X, LinkedIn, Notion… and let agents publish and schedule | [Connected accounts](accounts.md) |
 | Change the look or road layout | [Customization](customization.md) |
 | Connect storage and actual AI jobs | [Extending the boilerplate](extending.md) |
 
@@ -44,4 +47,4 @@ Illustrations are local SVG assets with accessible titles and descriptions. The 
 
 [AGENTS.md](../AGENTS.md) defines the shared architecture, invariants, coding conventions, and verification commands for coding agents. [CLAUDE.md](../CLAUDE.md) points to the same instructions. Keep shared rules in one place and update them when moving major components or changing application invariants.
 
-The homepage displays the documentation illustrations from `docs/assets`. The full workspace integration example is documented in `docs/integration.md`. Reusable library components do not import route modules.
+The homepage is the landing page (`app/page.tsx`, hero scene in `app/_landing/`). The full workspace integration example is documented in `docs/integration.md`. Reusable library components do not import route modules.

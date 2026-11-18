@@ -90,7 +90,7 @@ Use a single `RoadNetwork` for shared junctions. Separate `Road` instances paint
 
 | File | Controls |
 | --- | --- |
-| `app/page.tsx` | Homepage layout and documentation illustrations |
+| `app/page.tsx` | Landing page layout and copy |
 | `components/agent-city/city.module.css` | Ground, selected outline, hover, status lighting, camera buttons |
 | `components/agent-city/add-agent-dialog.module.css` | Modal, form, preview panel, palette swatches, responsive behavior |
 | `components/agent-city/renderer.js` | Building palettes, geometry, sign drawing, interior details |

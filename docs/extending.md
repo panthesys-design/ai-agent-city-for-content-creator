@@ -4,7 +4,7 @@
 
 ## What is implemented today
 
-The example has one permanent headquarters, local agent creation with a live preview, office editing/removal, roads, selection, dragging, camera controls, and night mode. State lives in the host page's React state. Reloading resets the workspace. No agent actually executes a task.
+The dashboard city has one permanent headquarters, six seeded starter agents with their own building designs, agent creation/editing with a live preview, deletion with confirmation, street roads to headquarters, a building popover, plot-snapping drag and drop, camera controls (pan, wheel/button zoom, fit), and night mode. Agents, their office appearance, and positions are saved in Strapi, so the layout survives a reload. No agent actually executes a task; `status`, `progress`, and `activity` are display fields.
 
 ## Add persistence
 
@@ -24,15 +24,36 @@ Validate imported records at your API boundary: unique IDs, finite coordinates, 
 
 For creation, save the agent, office, and road as one transaction or one consistent server operation, then update the UI from the result. For deletion, remove related links and handle shared agent references. The generic renderer cannot enforce these persistence rules.
 
+## Agents in Strapi
+
+Collection type **Agents** (singular `agent`, plural `agents`, REST `/api/agents`, Draft & Publish off). One record is an agent plus its office:
+
+| Field | Strapi type | Values |
+| --- | --- | --- |
+| `name` | Short text, required, max 32 | Full name in labels; the building sign shortens it (`signLabel`) |
+| `instructions` | Long text, required, max 2000 | The dialog's "Agent instructions" |
+| `status` | Enumeration, default `idle` | `idle`, `working`, `error`, `offline` |
+| `progress` / `activity` | Integer 0–100 / short text, optional | Shown in the building popover when set |
+| `design` | Enumeration, default `studio` | `studio`, `observatory`, `broadcast`, `gallery`, `cinema`, `dispatch` |
+| `theme`, `icon`, `floors`, `glass`, `interior`, `roof`, `trees` | Office appearance | Same values as `AgentOffice` |
+| `x`, `y` | Integer, required | Plot centre; multiples of `CITY_PLOT` within 12 plots of the origin |
+| `headquarter` | Relation: Agent belongs to one Headquarter | Ownership |
+
+Headquarters also stores its dragged plot as `x`/`y` (integers; null means the preset plot at `(290, 290)`). **Reset layout** clears them and moves each starter agent (matched by name) to its starter plot and every other agent to the next free plot in creation order (`originalLayout` in `lib/agent-records.ts`); names, instructions, and appearance are untouched.
+
+Headquarters also has `agentsSeeded` (boolean). The API token needs find/create/update/delete on Agent and update on Headquarter. Roads are not stored; they are derived from positions (`toRoad`), so they follow every move. Server actions in `app/dashboard/agent-actions.ts` validate drafts and plots and check that the agent belongs to the caller's headquarters before writing. Moves are optimistic and roll back with a notice if saving fails.
+
+`next.config.ts` turns off `experimental.serverComponentsHmrCache`: with it on, dev hot reloads replay stale `fetch` responses, and the first-visit seeding could run twice.
+
 ## Connect actual agent execution
 
 Run model calls and task dispatch in server-side services or jobs. Store credentials on the server. Keep runtime job status separate from layout changes, then map that status into the `agents` prop to update badges.
 
 A visual road does not schedule work or define a dependency graph. If you need agent-to-agent handoffs, model those connections separately using agent IDs and execution semantics. Keep the visual map free to rearrange without changing task behavior accidentally.
 
-## Add asynchronous creation
+## Asynchronous creation
 
-The current dialog's `onCreate` callback is synchronous and has no pending/error state. Extend it with a pending flag, duplicate-submit prevention, and an inline error before awaiting network requests. Close only after success; preserve the user's draft on failure. The existing `initialValue` supports templates, not an external controlled draft.
+`AddAgentDialog.onCreate` may return a promise. While it is pending, submit, cancel, close, Escape, and backdrop dismissal are disabled; a rejection keeps the draft and shows the error's message. The host closes the dialog after success. `initialValue` seeds a fresh draft per opening (used for editing); it is not a controlled draft.
 
 ## Accessibility and browser QA
 
@@ -67,13 +88,13 @@ Headquarters tests cover architecture/height/tint/spire combinations, palettes, 
 
 ## Current layout limits
 
-- `nextOfficePosition` uses center spacing, not true footprint collision detection.
-- Dragging can overlap offices and does not snap to plots.
-- Roads may cross other plots; automatic obstacle avoidance is not implemented.
-- Camera and ground grid have initial fixed bounds. Large cities need fit-to-content controls or expanded navigation.
-- Reset view restores the initial camera; it does not recover a moved headquarters automatically.
+- Placement and dropping work per plot (`CITY_PLOT` grid); buildings larger than a pad are not supported.
+- `nextOfficePosition` skips the plots directly behind and in front of headquarters in the first two rings so the tower neither hides nor is hidden by an office. Dragging may still place an office there.
+- `street` roads run between plots and share streets; there is no lane or intersection modelling.
+- Moving buildings has no keyboard alternative yet.
+- The camera frames the whole city on load, on "Fit city", and when `fitKey` changes; otherwise it keeps the user's pan and zoom.
 - The renderer is legacy JavaScript behind a typed declaration. New geometry needs runtime/browser verification as well as type checks.
-- There are no persistence, authentication, billing, job processing, or deployment features wired into the city.
+- Apart from headquarters and agents (Strapi), there are no billing, job processing, or deployment features wired into the city. Authentication (CloudHike.dev + Strapi user records) protects `/dashboard`; see the README's Authentication section.
 
 ## Documentation assets
 

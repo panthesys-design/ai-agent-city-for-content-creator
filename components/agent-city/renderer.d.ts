@@ -1,2 +1,3 @@
 import type { CityBuilding } from './types';
-export function createBuildingRenderer(defs: SVGDefsElement, prefix: string): (target: SVGGElement, building: CityBuilding) => void;
+/** `label` overrides the sign text, which otherwise uses `name`. */
+export function createBuildingRenderer(defs: SVGDefsElement, prefix: string): (target: SVGGElement, building: CityBuilding & { label?: string }) => void;

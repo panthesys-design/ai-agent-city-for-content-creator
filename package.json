@@ -8,31 +8,38 @@
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "node --test components/agent-city/*.test.mjs",
+    "test": "node --test components/agent-city/*.test.mjs lib/*.test.mjs lib/ai/*.test.mjs lib/computer/*.test.mjs",
     "check": "npm run lint && npm run typecheck && npm test && npm run build:webpack",
     "build:webpack": "next build --webpack",
+    "generate:browser-script": "node scripts/generate-browser-script.mjs",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
-    "next": "^16.2.6",
-    "react": "^19.2.6",
-    "react-dom": "^19.2.6",
+    "@composio/core": "^0.29.0",
+    "@openai/agents": "^0.22.0",
     "drizzle-orm": "^0.45.2",
     "lucide-react": "^0.475.0",
-    "postgres": "^3.4.5"
+    "next": "^16.2.6",
+    "openai": "^7.57.0",
+    "postgres": "^3.4.5",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "4.1.18",
     "@types/node": "^20.14.10",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.10",
+    "drizzle-kit": "^0.31.10",
     "eslint": "^9.16.0",
     "eslint-config-next": "^16.2.6",
-    "typescript": "^5.6.3",
-    "@tailwindcss/postcss": "^4.0.0",
-    "drizzle-kit": "^0.31.10",
-    "tailwindcss": "^4.0.0"
+    "tailwindcss": "4.1.18",
+    "typescript": "^5.6.3"
   },
   "description": "A reusable isometric AI agent city starter built with Next.js, React, and TypeScript.",
   "engines": {

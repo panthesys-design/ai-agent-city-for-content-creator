@@ -1,0 +1,184 @@
+/* Settings page. Colour tokens come from the dashboard shell; the reused headquarters designer also needs --field and --danger. */
+
+.page {
+  --ok: #16a085;
+  --danger: #e34d64;
+  --danger-soft: rgb(227 77 100 / 0.08);
+  --field: color-mix(in srgb, var(--hover) 55%, var(--surface));
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  max-width: 1080px;
+}
+
+.title { margin: 0 0 6px; font-size: 22px; font-weight: 700; letter-spacing: -0.015em; }
+.lead { max-width: 640px; margin: 0; color: var(--muted); font-size: 14.5px; }
+
+.section { display: flex; flex-direction: column; gap: 14px; }
+.sectionTitle {
+  margin: 0;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.form { display: flex; flex-direction: column; gap: 14px; }
+
+/* ---------- Cards ---------- */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+@media (min-width: 640px) { .card { padding: 20px 22px; } }
+.card[data-tone="danger"] { border-color: color-mix(in srgb, var(--danger) 35%, var(--line)); }
+.cardHeader { display: flex; gap: 12px; align-items: flex-start; }
+.cardIcon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.card[data-tone="danger"] .cardIcon { background: var(--danger-soft); color: var(--danger); }
+.cardTitle { margin: 0; font-size: 15px; font-weight: 700; }
+.cardLead { margin: 3px 0 0; color: var(--muted); font-size: 13.5px; line-height: 1.45; }
+
+/* The reused headquarters designer sits inside a card: drop its outer animation offset. */
+.card > form { margin-top: 0; }
+
+/* ---------- Fields ---------- */
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+.field { display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+.field label { font-size: 13.5px; font-weight: 600; }
+.input {
+  width: 100%;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--field);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+.input:hover { border-color: color-mix(in srgb, var(--accent) 25%, var(--line)); }
+.input:focus-visible { border-color: var(--accent); background: var(--surface); box-shadow: 0 0 0 4px var(--accent-soft); }
+.input[readonly] { color: var(--muted); cursor: default; }
+.input[readonly]:hover { border-color: var(--line); }
+.hint { margin: 0; color: var(--faint); font-size: 12.5px; line-height: 1.45; }
+.note {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--hover);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.note a, .linkButton { color: var(--accent); font-weight: 600; }
+.linkButton { padding: 0; border: 0; background: none; font: inherit; cursor: pointer; }
+.linkButton:hover { text-decoration: underline; }
+
+/* ---------- Approval choices ---------- */
+.choices { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.choice {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.choice:hover { border-color: color-mix(in srgb, var(--accent) 40%, var(--line)); }
+.choice:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.choice input { flex: none; margin: 2px 0 0; accent-color: var(--accent); }
+.choice input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.choiceText strong { display: flex; gap: 6px; align-items: center; font-size: 14px; }
+.choiceText small { display: block; margin-top: 4px; color: var(--muted); font-size: 12.5px; line-height: 1.45; }
+
+/* ---------- Actions and status ---------- */
+.actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: flex-end; }
+.status { display: flex; gap: 7px; align-items: center; margin: 0; font-size: 13px; font-weight: 600; }
+.status[data-tone="ok"] { color: color-mix(in srgb, var(--ok) 80%, var(--ink)); }
+.status[data-tone="error"] { color: var(--danger); }
+.status svg { flex: none; }
+
+.primary, .secondary, .danger, .dangerSolid {
+  display: inline-flex;
+  flex: none;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.primary { border: 0; background: linear-gradient(135deg, var(--accent), var(--accent-2, var(--accent))); color: #fff; }
+.secondary { border: 1px solid var(--line); background: var(--surface); color: var(--ink); }
+.secondary:hover:not(:disabled) { background: var(--hover); }
+.danger { border: 1px solid color-mix(in srgb, var(--danger) 40%, var(--line)); background: var(--surface); color: var(--danger); }
+.danger:hover:not(:disabled) { background: var(--danger-soft); }
+.dangerSolid { border: 0; background: var(--danger); color: #fff; }
+:is(.primary, .secondary, .danger, .dangerSolid):disabled { opacity: 0.55; cursor: not-allowed; }
+:is(.primary, .secondary, .danger, .dangerSolid, .linkButton):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ---------- Danger zone ---------- */
+.dangerRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.dangerRow > div { flex: 1 1 280px; min-width: 0; }
+.dangerRow strong { font-size: 14px; }
+.dangerRow p { margin: 3px 0 0; color: var(--muted); font-size: 13px; line-height: 1.45; }
+.dangerRow .status { margin-top: 6px; }
+
+.dialog {
+  width: min(460px, calc(100vw - 32px));
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+.dialog::backdrop { background: rgb(12 11 20 / 0.45); backdrop-filter: blur(2px); }
+.dialogBody { display: flex; flex-direction: column; gap: 14px; padding: 20px; }
+.dialogTitle { display: flex; gap: 8px; align-items: center; margin: 0; font-size: 16px; font-weight: 700; }
+.dialogTitle svg { color: var(--danger); }
+.dialogText { margin: 0; color: var(--muted); font-size: 13.5px; line-height: 1.5; }
+.dialogActions { display: flex; gap: 10px; justify-content: flex-end; }
+
+@media (prefers-reduced-motion: reduce) {
+  .spin { animation-duration: 3s; }
+  .input, .choice { transition: none; }
+}

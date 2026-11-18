@@ -68,7 +68,6 @@ function slab(g,world,z,T,topFill,sideFill,topAttrs={}){
 }
 function pad(outer,lift,body){
   const plot=rrect(-110,-110,110,110,30);
-  outer.insertBefore(el('polygon',{class:'pad-shadow',points:pts(plot.map(p=>{const q=P(p[0],p[1]);return [q[0],q[1]+12]})),fill:'#3f5a1e',opacity:.3,filter:'url(#blurMid)'}),lift);
   slab(body,plot,7,7,'#fbfbfc','url(#padSide)',{class:'pad-top',stroke:'#ffffff','stroke-width':1.5});
 }
 function contactShadow(g,boxes){
@@ -202,7 +201,7 @@ function monitor(g,x0,Y,w,h,kind,z0){
   box(g,{x:x0+w/2-2.5,y:Y-6,z:z0-4,w:5,d:4,h:5,ct:'#6b6f80',cl:'#5b5f70',cr:'#4b4f60'});
   box(g,{x:x0-1.5,y:Y-3,z:z0-1.5,w:w+3,d:3,h:h+3,ct:'#4b4f60',cl:'#2e3240',cr:'#262a36'});
   (SCREENS[kind]||SCREENS.chart)(faceGroup(g,x0,Y,z0+h),w,h);
-  if(LIGHTS)rct(faceGroup(LIGHTS,x0,Y,z0+h),0,0,w,h,'#bfe0ff',{opacity:.3,class:'lit'});
+  if(LIGHTS)rct(faceGroup(LIGHTS,x0,Y,z0+h),0,0,w,h,'#bfe0ff',{'fill-opacity':.3,class:'lit'});
 }
 function dish(g,x,y,z){
   rbox(g,{x:x-6,y:y-6,z,w:12,d:12,h:4},3);
@@ -247,8 +246,10 @@ function interior(g,kind,X0,X1,Y0,Y1,F,TOP){
   plant(g,-58,40,F);plant(g,58,-20,F);
 }
 const AG={X0:-70,X1:70,Y0:-60,Y1:60,F:8,TOP:96,UH:46};
+const AGENT_DESIGNS=['studio','observatory','broadcast','gallery','cinema','dispatch'];
 const agentOpts=b=>({floors:Math.max(1,Math.min(4,b.floors|0||1)),glass:['full','front','none'].includes(b.glass)?b.glass:'full',
-  theme:THEMES[b.theme]?b.theme:'lavender',interior:b.interior||'desk',roof:Array.isArray(b.roof)?b.roof:['tree','units'],trees:b.trees!==false});
+  theme:THEMES[b.theme]?b.theme:'lavender',interior:b.interior||'desk',roof:Array.isArray(b.roof)?b.roof:['tree','units'],trees:b.trees!==false,
+  design:AGENT_DESIGNS.includes(b.design)?b.design:'studio'});
 TYPES.agent={
   anchor:b=>{const o=agentOpts(b);return [0,0,AG.TOP+16+(o.floors>1?(o.floors-1)*AG.UH+12:0)+12]},
   parts:{main:{x:-70,y:-60,z:0,w:140,d:120,h:112}},
@@ -258,6 +259,7 @@ TYPES.agent={
   draw(g,b){
     const o=agentOpts(b), {X0,X1,Y0,Y1,F,TOP,UH}=AG;
     TH=THEMES[o.theme]; GLASS='warm';
+    if(o.design!=='studio'){GLASS=DESIGN_GLASS[o.design];DESIGNS[o.design](g,b,o);TH=THEMES.lavender;return;}
     if(o.trees){roundTree(g,-96,-46,1.05);roundTree(g,-30,-92,.9);}
     contactShadow(g,[{x:-76,y:-66,z:0,w:152,d:132}]);
     rbox(g,{x:-76,y:-66,z:0,w:152,d:132,h:F},18);
@@ -277,7 +279,7 @@ TYPES.agent={
       const glass=(face)=>{
         const q=face==='L'?[P(X0+8,Y1,F),P(X1,Y1,F),P(X1,Y1,TOP),P(X0+8,Y1,TOP)]:[P(X1,Y0+8,F),P(X1,Y1,F),P(X1,Y1,TOP),P(X1,Y0+8,TOP)];
         poly(g,q,face==='L'?'#ffffff':'#f6ecff',{opacity:.1,stroke:'none'});
-        poly(LIGHTS||g,q,'#ffc65a',{opacity:.38,stroke:'none',class:'lit'});
+        poly(LIGHTS||g,q,'#ffc65a',{'fill-opacity':.38,stroke:'none',class:'lit'});
         const len=face==='L'?X1-X0-8:Y1-Y0-8;
         for(let i=1;i<3;i++){const u=len*i/3;const a=face==='L'?P(X0+8+u,Y1,F):P(X1,Y0+8+u,F),b2=face==='L'?P(X0+8+u,Y1,TOP):P(X1,Y0+8+u,TOP);
           el('line',{x1:a[0],y1:a[1],x2:b2[0],y2:b2[1],stroke:TH.side[1],'stroke-width':2.4},g)}
@@ -325,6 +327,192 @@ TYPES.agent={
     }
     TH=THEMES.lavender;
   }
+};
+/* ---------- agent designs: one landmark silhouette per kind of work, sharing plinth, sign and planting ---------- */
+const DESIGN_GLASS={observatory:'blue',broadcast:'teal',gallery:'clear',cinema:'warm',dispatch:'blue'};
+function faceGroupR(g,x,y,z){const o=P(x,y,z);return el('g',{transform:`matrix(${C},${-S},0,1,${o[0].toFixed(2)},${o[1].toFixed(2)})`},g)}
+function mullions(g,b,face,u,v,w,h,n){for(let i=1;i<n;i++){const a=facePt(b,face,u+w*i/n,v),b2=facePt(b,face,u+w*i/n,v+h);el('line',{x1:a[0],y1:a[1],x2:b2[0],y2:b2[1],stroke:'#ffffff','stroke-width':2},g)}}
+function roofDeck(g,x0,y0,x1,y1,z){el('polygon',{points:pts(rrect(x0,y0,x1,y1,12).map(q=>P(q[0],q[1],z))),fill:TH.deck,stroke:TH.side[1],'stroke-width':1},g)}
+function designGround(g,o){
+  if(o.trees){roundTree(g,-96,-46,1.05);roundTree(g,-30,-92,.9);}
+  contactShadow(g,[{x:-78,y:-68,z:0,w:156,d:136}]);
+  rbox(g,{x:-80,y:-70,z:0,w:160,d:140,h:8},18);
+}
+function designFront(g,b,o,sign,sx){
+  const label=String(b.label||b.name||'Agent').slice(0,16);
+  rbox(g,{x:sx,y:64,z:0,w:40,d:20,h:5},4);rbox(g,{x:sx,y:64,z:0,w:40,d:10,h:8},4);
+  pillSign(g,sign[0],sign[1],sign[2],Math.max(96,Math.min(136,44+label.length*6.4)),21,label,b.icon);
+  if(o.trees){
+    [[-88,86],[-72,86],[-56,86],[-40,86],[-24,86],[-8,86],[8,86],[24,86],[40,86],[56,86],[72,86],[90,70],[90,52],[90,34]]
+      .filter(([x])=>x<sx-8||x>sx+48).forEach(([x,y])=>bush(g,x,y,.9));
+    roundTree(g,-96,58,1.1);roundTree(g,96,-4,1.05);
+  }
+}
+function dome(g,x,y,z,r,drumH){
+  const [cx,cy]=P(x,y,z), rx=r*C*Math.SQRT2, ry=r*S*Math.SQRT2, ty=cy-drumH, dh=rx*.8, side='url(#side-'+TH.key+')';
+  el('path',{d:`M${cx-rx},${ty} L${cx-rx},${cy} A${rx},${ry} 0 0 0 ${cx+rx},${cy} L${cx+rx},${ty} Z`,fill:side},g);
+  el('path',{d:`M${cx-rx},${cy-drumH*.45} A${rx},${ry} 0 0 0 ${cx+rx},${cy-drumH*.45}`,fill:'none',stroke:TH.accent,'stroke-width':3},g);
+  el('path',{d:`M${cx-rx},${ty} A${rx},${dh} 0 0 1 ${cx+rx},${ty} A${rx},${ry} 0 0 1 ${cx-rx},${ty} Z`,fill:side,stroke:'#ffffff','stroke-width':1.2},g);
+  el('ellipse',{cx:cx-rx*.42,cy:ty-dh*.52,rx:rx*.2,ry:dh*.1,transform:`rotate(-32 ${cx-rx*.42} ${ty-dh*.52})`,fill:'#ffffff',opacity:.65},g);
+  const slit=[[cx-3,ty-dh+1],[cx+7,ty-dh+1.5],[cx+15,ty+ry*.78],[cx+3,ty+ry*.95]];
+  el('polygon',{points:pts(slit),fill:'#2a2f4a'},g);
+  if(LIGHTS)el('polygon',{points:pts(slit),fill:'#ffd77a',class:'lit'},LIGHTS);
+  el('line',{x1:cx+7,y1:ty-dh*.3,x2:cx+30,y2:ty-dh-14,stroke:'#4a4f66','stroke-width':8,'stroke-linecap':'round'},g);
+  el('line',{x1:cx+9,y1:ty-dh*.38,x2:cx+29,y2:ty-dh-12,stroke:'#6b7088','stroke-width':3,'stroke-linecap':'round'},g);
+  el('circle',{cx:cx+30,cy:ty-dh-14,r:4.6,fill:TH.accent,stroke:'#ffffff','stroke-width':1.2},g);
+}
+const DESIGNS={
+  /* Research: a lab with a rooftop observatory dome and telescope. */
+  observatory(g,b,o){
+    const H=84+(o.floors-1)*34, top=8+H;
+    designGround(g,o);
+    const main={x:-72,y:-58,z:8,w:144,d:116,h:H};
+    rbox(g,main,14);
+    pane(g,main,'L',16,4,112,30,true);mullions(g,main,'L',16,4,112,30,4);
+    windows(g,main,'L',{cols:5,rows:o.floors,z0:44,z1:H-14,mu:16,gu:8,gv:12});
+    windows(g,main,'R',{cols:4,rows:o.floors+1,z0:6,z1:H-14,mu:16,gu:8,gv:10});
+    rband(g,main,TH.accent,14);
+    rbox(g,{x:-76,y:-62,z:top,w:152,d:124,h:10},16);
+    const rz=top+10;
+    roofDeck(g,-64,-50,64,50,rz);
+    dish(g,-44,30,rz);
+    dome(g,4,-12,rz,40,18);
+    rbox(g,{x:40,y:24,z:rz,w:20,d:14,h:7},4);
+    designFront(g,b,o,[-60,62,top-6],-20);
+  },
+  /* Voice: a broadcast studio with an equalizer wall, an ON AIR tower and a radio mast. */
+  broadcast(g,b,o){
+    const ex=(o.floors-1)*30, H=70+ex, TW=150+ex;
+    designGround(g,o);
+    const back={x:-72,y:-62,z:8,w:70,d:46,h:46+ex};
+    rbox(g,back,10);ledge(g,back,10);
+    const tower={x:6,y:-64,z:8,w:56,d:52,h:TW};
+    rbox(g,tower,10);strips(g,tower,'L',14,10);strips(g,tower,'R',14,10);rband(g,tower,TH.accent,10);ledge(g,tower,10);
+    const air=faceGroup(g,12,-12,8+TW-18);
+    rct(air,0,0,44,12,'#e5484d',{rx:3});
+    const t=el('text',{x:22,y:8.6,'text-anchor':'middle','font-size':7.5,'font-weight':800,'font-family':'Onest,system-ui,sans-serif','letter-spacing':'.12em',fill:'#ffffff'},air);t.textContent='ON AIR';
+    if(LIGHTS)rct(faceGroup(LIGHTS,12,-12,8+TW-18),-4,-4,52,20,'url(#glow)',{rx:6,class:'lit'});
+    const mz=8+TW+2, [mx,my]=P(34,-38,mz+6), mt=my-74;
+    rbox(g,{x:26,y:-46,z:mz,w:16,d:16,h:6},4);
+    el('path',{d:`M${mx-9},${my} L${mx},${mt} L${mx+9},${my}`,fill:'none',stroke:'#b9bfc6','stroke-width':2.2,'stroke-linejoin':'round'},g);
+    [18,36,54].forEach(h=>{const w=9*(1-h/74);el('line',{x1:mx-w,y1:my-h,x2:mx+w,y2:my-h,stroke:'#b9bfc6','stroke-width':1.6},g)});
+    [10,17,24].forEach((r,i)=>[-1,1].forEach(s=>el('path',{d:`M${mx+s*r*.55},${mt-r*.8} Q${mx+s*r*1.05},${mt} ${mx+s*r*.55},${mt+r*.8}`,fill:'none',stroke:TH.accent,'stroke-width':2,'stroke-linecap':'round',opacity:1-i*.28},g)));
+    el('circle',{cx:mx,cy:mt,r:3.2,fill:'#ff3b5c',class:'blink'},LIGHTS||g);
+    const main={x:-72,y:-14,z:8,w:144,d:72,h:H};
+    rbox(g,main,12);
+    windows(g,main,'R',{cols:3,rows:o.floors,z0:10,z1:H-12,mu:14,gu:8,gv:12});
+    pane(g,main,'L',98,0,32,32,true);mullions(g,main,'L',98,0,32,32,2);
+    const eq=faceGroup(g,-60,58,8+H-10);
+    rct(eq,0,0,82,34,'#272150',{rx:5});
+    for(let i=0;i<11;i++){const bh=6+24*Math.abs(Math.sin(i*1.7+.6));rct(eq,6+i*6.8,(34-bh)/2,3.8,bh,['#9ff0ff','#c4a8ff',shade(TH.accent,1.25)][i%3],{rx:1.6})}
+    if(LIGHTS)rct(faceGroup(LIGHTS,-60,58,8+H-10),0,0,82,34,'#bfe0ff',{'fill-opacity':.28,rx:5,class:'lit'});
+    rband(g,main,TH.accent,12);
+    rbox(g,{x:-75,y:-17,z:8+H,w:150,d:78,h:8},14);
+    const rz=16+H;
+    roofDeck(g,-64,-6,64,52,rz);
+    rbox(g,{x:-56,y:0,z:rz,w:26,d:20,h:9},5);rbox(g,{x:-20,y:8,z:rz,w:16,d:14,h:6},4);
+    designFront(g,b,o,[-62,61,8+H-4],22);
+  },
+  /* Media: stacked, cantilevered gallery boxes framed with artwork and a rooftop camera. */
+  gallery(g,b,o){
+    const ex=(o.floors-1)*30;
+    designGround(g,o);
+    const low={x:-70,y:-36,z:8,w:104,d:94,h:60};
+    rbox(g,low,8);
+    pane(g,low,'L',10,2,84,34,true);mullions(g,low,'L',10,2,84,34,4);
+    windows(g,low,'R',{cols:3,rows:1,z0:10,z1:46,mu:12,gu:8});
+    rbox(g,{x:60,y:22,z:8,w:9,d:9,h:60},3);
+    const up={x:-46,y:-62,z:68,w:118,d:96,h:56+ex};
+    rbox(g,up,8);
+    const fz=up.z+up.h-10, art=[['#ffd166'],['#c4a8ff'],['#ff8fb1'],['#9ff0ff']];
+    const frame=(f,x,c,h)=>{rct(f,x,0,30,h,'#ffffff',{rx:2});rct(f,x+3,3,24,h-6,c,{rx:1.5});
+      el('path',{d:`M${x+3},${h-3} L${x+11},${h*.5} L${x+17},${h*.7} L${x+21},${h*.6} L${x+27},${h-3} Z`,fill:'#ffffff',opacity:.75},f);el('circle',{cx:x+21,cy:h*.28,r:2.6,fill:'#ffffff',opacity:.9},f)};
+    const fh=Math.min(34+ex,up.h-20);
+    const fl=faceGroup(g,up.x,up.y+up.d,fz);[6,44,82].forEach((x,i)=>frame(fl,x,art[i][0],fh));
+    const fr=faceGroupR(g,up.x+up.w,up.y+up.d,fz);[10,52].forEach((x,i)=>frame(fr,x,art[i+2][0],fh));
+    if(LIGHTS){rct(faceGroup(LIGHTS,up.x,up.y+up.d,fz),4,-2,110,fh+4,'#fff1c4',{'fill-opacity':.25,class:'lit'});}
+    rband(g,up,TH.accent,8);ledge(g,up,8);
+    plant(g,-58,46,68);plant(g,-20,46,68);
+    const rz=up.z+up.h;
+    roofDeck(g,-38,-54,64,26,rz);
+    roofGarden(g,{x:-34,y:-50,z:rz,h:0},0,0,30,30);
+    const cam={x:8,y:-30,z:rz,w:40,d:30,h:22};
+    abox(g,cam,TH.accent);
+    box(g,{x:14,y:-26,z:rz+22,w:12,d:10,h:5,ct:'#ffffff',cl:'#f1f2f4',cr:'#dfe2e6'});
+    const lens=faceGroup(g,cam.x,cam.y+cam.d,rz+22);
+    el('circle',{cx:22,cy:11,r:9,fill:'#2b2f45'},lens);el('circle',{cx:22,cy:11,r:5,fill:'#5d7cff'},lens);el('circle',{cx:20,cy:9,r:1.6,fill:'#ffffff'},lens);
+    designFront(g,b,o,[-62,60,48],-30);
+  },
+  /* Video editing: a cinema with a big screen, marquee lights, film-strip side and rooftop reels. */
+  cinema(g,b,o){
+    const H=112+(o.floors-1)*30;
+    designGround(g,o);
+    const main={x:-74,y:-56,z:8,w:148,d:112,h:H};
+    rbox(g,main,10);
+    for(let c=0;c<2;c++)for(let r=0;r<o.floors+1;r++){const rh=(H-30-o.floors*10)/(o.floors+1);pane(g,main,'R',12+c*28,10+r*(rh+10),22,rh,rnd1(++LITN)<.4)}
+    const fs=faceGroupR(g,74,56,8+H-12), fsh=H-24;
+    rct(fs,14,0,26,fsh,'#2b2f45',{rx:2});
+    for(let k=0;k*12+8<fsh;k++){rct(fs,16.5,4+k*12,3,4,'#e9ecf2',{rx:.6});rct(fs,34.5,4+k*12,3,4,'#e9ecf2',{rx:.6})}
+    for(let k=0;k*20+18<fsh;k++)rct(fs,21.5,3+k*20,11,15,['#ff8fb1','#ffd166','#9ff0ff','#c4a8ff'][k%4],{rx:1});
+    const sc=faceGroup(g,-52,56,8+H-10);
+    rct(sc,-3,-3,110,56,'#3a3e4e',{rx:4});SCREENS.play(sc,104,50);
+    if(LIGHTS)rct(faceGroup(LIGHTS,-52,56,8+H-10),-8,-8,120,66,'url(#glow)',{'fill-opacity':.7,rx:10,class:'lit'});
+    pane(g,main,'L',30,0,88,28,true);mullions(g,main,'L',30,0,88,28,4);
+    abox(g,{x:-58,y:56,z:38,w:116,d:16,h:7},TH.accent);
+    for(let x=-54;x<=54;x+=9){const q=P(x,72,38);el('circle',{cx:q[0],cy:q[1]-1,r:1.9,fill:'#ffe08a'},g);
+      if(LIGHTS)el('circle',{cx:q[0],cy:q[1]-1,r:4,fill:'url(#glow)',class:'lit'},LIGHTS);}
+    rband(g,main,TH.accent,10);
+    rbox(g,{x:-77,y:-59,z:8+H,w:154,d:118,h:8},12);
+    const rz=16+H;
+    roofDeck(g,-64,-48,64,48,rz);
+    box(g,{x:-46,y:-12,z:rz,w:64,d:8,h:6,ct:'#8d959e',cl:'#7b838c',cr:'#6b737c'});
+    const rl=faceGroup(g,-46,-4,rz+6);
+    el('path',{d:'M14,-6 Q30,4 46,-8',fill:'none',stroke:'#2b2f45','stroke-width':2.4},rl);
+    [[14,-22,16],[46,-20,13]].forEach(([cx,cy,r])=>{el('circle',{cx,cy,r,fill:'#3a3e4e'},rl);el('circle',{cx,cy,r:r-3,fill:'#4b5063'},rl);
+      for(let i=0;i<6;i++){const a=i*Math.PI/3;el('circle',{cx:cx+Math.cos(a)*r*.52,cy:cy+Math.sin(a)*r*.52,r:r*.17,fill:'#2b2f45'},rl)}
+      el('circle',{cx,cy,r:2.4,fill:'#c3c9d0'},rl)});
+    rbox(g,{x:34,y:14,z:rz,w:22,d:16,h:8},5);
+    designFront(g,b,o,[-60,72,45],-20);
+  },
+  /* Publishing & scheduling: a clock tower dispatch centre with a calendar facade and a launch-ready rocket. */
+  dispatch(g,b,o){
+    const ex=(o.floors-1)*30, TW=168+ex, H=56;
+    designGround(g,o);
+    const tower={x:4,y:-66,z:8,w:62,d:60,h:TW};
+    rbox(g,tower,12);curtain(g,tower,12);rband(g,tower,TH.accent,12);ledge(g,tower,12);
+    const ck=faceGroup(g,4,-6,8+TW-12);
+    if(LIGHTS)el('circle',{cx:31,cy:20,r:26,fill:'url(#glow)',class:'lit'},faceGroup(LIGHTS,4,-6,8+TW-12));
+    el('circle',{cx:31,cy:20,r:18,fill:TH.accent},ck);el('circle',{cx:31,cy:20,r:15,fill:'#ffffff'},ck);
+    for(let i=0;i<12;i++){const a=i*Math.PI/6,r0=i%3?13.2:10.5;el('line',{x1:31+Math.cos(a)*r0,y1:20+Math.sin(a)*r0,x2:31+Math.cos(a)*14,y2:20+Math.sin(a)*14,stroke:'#4b5063','stroke-width':i%3?1:1.8},ck)}
+    el('line',{x1:31,y1:20,x2:31,y2:10.5,stroke:'#2b2f45','stroke-width':2.2,'stroke-linecap':'round'},ck);
+    el('line',{x1:31,y1:20,x2:38,y2:23.5,stroke:'#2b2f45','stroke-width':1.6,'stroke-linecap':'round'},ck);
+    el('circle',{cx:31,cy:20,r:1.8,fill:TH.accent},ck);
+    const rz0=8+TW+2;
+    rbox(g,{x:14,y:-56,z:rz0,w:42,d:40,h:10},8);
+    dish(g,26,-44,rz0+10);
+    needle(g,46,-26,rz0+10,40);
+    const an={x:-72,y:-12,z:8,w:140,d:70,h:H};
+    rbox(g,an,10);
+    windows(g,an,'R',{cols:3,rows:1,z0:10,z1:H-12,mu:14,gu:8});
+    const cal=faceGroup(g,-62,58,8+H-9);
+    rct(cal,-2,-2,88,36,'#ffffff',{rx:4});SCREENS.calendar(cal,84,32);
+    pane(g,an,'L',100,0,30,34,true);mullions(g,an,'L',100,0,30,34,2);
+    rband(g,an,TH.accent,10);
+    rbox(g,{x:-75,y:-15,z:8+H,w:146,d:76,h:8},12);
+    const rz=16+H;
+    roofDeck(g,-64,-4,60,52,rz);
+    rbox(g,{x:-54,y:12,z:rz,w:20,d:20,h:4},6);
+    const [qx,qy]=P(-44,22,rz+4), s0=qy-2, A=TH.accent;
+    el('path',{d:`M${qx-7},${s0-16} L${qx-14},${s0-4} L${qx-14},${s0+2} L${qx-7},${s0-5} Z`,fill:A},g);
+    el('path',{d:`M${qx+7},${s0-16} L${qx+14},${s0-4} L${qx+14},${s0+2} L${qx+7},${s0-5} Z`,fill:shade(A,.8)},g);
+    el('path',{d:`M${qx-4},${s0-3} Q${qx},${s0+9} ${qx+4},${s0-3} Z`,fill:'#ffb84a'},g);
+    el('path',{d:`M${qx},${s0-46} C${qx+10},${s0-36} ${qx+10},${s0-14} ${qx+7},${s0-4} L${qx-7},${s0-4} C${qx-10},${s0-14} ${qx-10},${s0-36} ${qx},${s0-46} Z`,fill:'#ffffff',stroke:'#d9dce1','stroke-width':.8},g);
+    el('path',{d:`M${qx},${s0-46} C${qx+10},${s0-36} ${qx+10},${s0-14} ${qx+7},${s0-4} L${qx+2},${s0-4} C${qx+5},${s0-14} ${qx+5},${s0-36} ${qx},${s0-46} Z`,fill:TH.side[1]},g);
+    el('path',{d:`M${qx},${s0-46} C${qx+5},${s0-42} ${qx+7.5},${s0-38} ${qx+8.6},${s0-33} L${qx-8.6},${s0-33} C${qx-7.5},${s0-38} ${qx-5},${s0-42} ${qx},${s0-46} Z`,fill:A},g);
+    el('circle',{cx:qx,cy:s0-24,r:4,fill:'#5d7cff',stroke:'#ffffff','stroke-width':1.5},g);
+    rbox(g,{x:20,y:20,z:rz,w:22,d:16,h:8},5);
+    designFront(g,b,o,[-62,61,8+H-4],24);
+  },
 };
 /* ---------- HQ skyscrapers: three styles, all driven by the spec ---------- */
 const skyOpts=b=>({style:['empire','crown','twin'].includes(b.style)?b.style:'empire',theme:THEMES[b.theme]?b.theme:'gold',
@@ -415,7 +603,7 @@ TYPES.skyscraper={
       {const c=TH.accent;let zz=z;
         [[30,26,12,10],[23,20,12,8],[16,14,12,6],[9,8,12,4]].forEach(([hw,hd,h,r],i)=>{
           slab(g,rrect(-hw,-hd,hw,hd,r),zz+h,h,shade(c,1.3+i*.08),i%2?shade(c,.9):c,{stroke:shade(c,1.5),'stroke-width':1});
-          if(LIGHTS)el('polygon',{points:pts(rrect(-hw,-hd,hw,hd,r).map(q=>P(q[0],q[1],zz+h))),fill:'#bfe0ff',opacity:.35,class:'lit'},LIGHTS);
+          if(LIGHTS)el('polygon',{points:pts(rrect(-hw,-hd,hw,hd,r).map(q=>P(q[0],q[1],zz+h))),fill:'#bfe0ff','fill-opacity':.35,class:'lit'},LIGHTS);
           zz+=h;});
         z=zz-2;}
       if(o.spire)needle(g,0,0,z,46);
@@ -607,7 +795,7 @@ function drawPadLife(g,b,T,items){
 
 return (target, building) => {
   target.replaceChildren();
-  const b = {...building, label: building.name, extras: building.extras || []};
+  const b = {...building, label: building.label ?? building.name, extras: building.extras || []};
   const lift=el('g',{class:'lift'},target);
   const body=el('g',{class:'body'},lift), lights=el('g',{class:'lights'},lift);
   pad(target,lift,body);

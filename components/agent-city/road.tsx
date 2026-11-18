@@ -24,7 +24,8 @@ export interface RoadNetworkProps extends RoadStyle {
   className?: string;
 }
 
-const ISO_TRANSFORM = `matrix(${Math.cos(Math.PI / 6)},0.5,${-Math.cos(Math.PI / 6)},0.5,0,0)`;
+/** World-to-screen isometric matrix for flat ground shapes drawn in world units. */
+export const ISO_TRANSFORM = `matrix(${Math.cos(Math.PI / 6)},0.5,${-Math.cos(Math.PI / 6)},0.5,0,0)`;
 const finiteWidth = (value: number | undefined, fallback: number, minimum: number) => Number.isFinite(value) ? Math.max(minimum, value!) : fallback;
 
 /** SVG group: mount inside your city's SVG, under the buildings. */

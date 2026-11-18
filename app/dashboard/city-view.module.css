@@ -1,0 +1,588 @@
+/* City page. Colour tokens (--ink, --line, --accent, …) are inherited from the dashboard shell. */
+
+.layout {
+  --radius: 14px;
+  --gap: 14px;
+  --ok: #16a085;
+  --danger: #e34d64;
+  --off: #9aa1ad;
+  --info: #3b7bf0;
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--gap);
+  max-width: 1680px;
+  margin: 0 auto;
+}
+
+.primary, .secondary { display: flex; flex-direction: column; gap: var(--gap); min-width: 0; }
+
+/* ---------- Header (single compact row) ---------- */
+.pageHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.headingGroup { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.title { margin: 0; font-size: 20px; font-weight: 750; letter-spacing: -0.02em; }
+.hqChip {
+  min-width: 0;
+  padding: 3px 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.primaryButton {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 9px;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  color: #fff;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.primaryButton:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* ---------- Stat cards (icon + label/value in one row) ---------- */
+.statsWrap { display: flex; flex-direction: column; gap: 4px; }
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+@media (min-width: 900px) { .stats { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.stats[aria-busy="true"] .statValue { opacity: 0.75; }
+
+.statCard {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--ink);
+  text-decoration: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.statCard:hover { border-color: color-mix(in srgb, var(--accent) 35%, var(--line)); background: var(--hover); }
+.statCard:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.statIcon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.statText { display: flex; flex-direction: column; min-width: 0; line-height: 1.2; }
+.statLabel { overflow: hidden; color: var(--muted); font-size: 12px; font-weight: 550; text-overflow: ellipsis; white-space: nowrap; }
+.statValue { display: flex; align-items: center; gap: 6px; font-size: 19px; font-weight: 750; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; transition: opacity 0.2s; }
+.statWarning { display: inline-flex; color: #d98a14; cursor: help; }
+.statDetail { overflow: hidden; margin-top: 2px; color: var(--faint); font-size: 11.5px; font-weight: 550; text-overflow: ellipsis; white-space: nowrap; }
+.statsFoot { display: flex; align-items: center; justify-content: flex-end; gap: 10px; min-height: 22px; }
+.statsError { color: #e34d64; font-size: 11.5px; font-weight: 600; }
+.statsRefresh {
+  display: inline-flex; align-items: center; gap: 5px; padding: 2px 6px; border: 0; border-radius: 6px; background: none;
+  color: var(--faint); font: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer;
+}
+.statsRefresh:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+.statsRefresh:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .statCard, .statValue { transition: none; } }
+
+/* ---------- City map ---------- */
+.cityFrame {
+  position: relative;
+  height: clamp(420px, 60vh, 720px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface);
+}
+/* Doubled selector outranks the component's own background. */
+.cityCanvas.cityCanvas {
+  height: 100%;
+  min-height: 0;
+  border-radius: 0;
+  background-color: #f6f5fb;
+  background-image: radial-gradient(circle, rgb(109 74 224 / 0.22) 1.2px, transparent 1.6px);
+  background-size: 22px 22px;
+}
+@media (prefers-color-scheme: dark) {
+  .cityCanvas.cityCanvas {
+    background-color: #121020;
+    background-image: radial-gradient(circle, rgb(157 130 255 / 0.22) 1.2px, transparent 1.6px);
+  }
+}
+.cityHint {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  margin: 0;
+  padding: 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 85%, transparent);
+  color: var(--muted);
+  font-size: 12px;
+  pointer-events: none;
+  backdrop-filter: blur(6px);
+}
+
+/* ---------- Cards (right column) ---------- */
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+.compactCard { flex: none; gap: 8px; padding: 12px 14px; }
+.cardTitle { margin: 0; font-size: 14px; font-weight: 700; letter-spacing: -0.01em; }
+.cardHeaderRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+.statusPill {
+  --tone: var(--off);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 9px 2px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--tone) 14%, transparent);
+  color: color-mix(in srgb, var(--tone) 80%, var(--ink));
+  font-size: 11.5px;
+  font-weight: 600;
+}
+.statusPill[data-status="working"] { --tone: var(--ok); }
+.statusPill[data-status="completed"] { --tone: var(--info); }
+.statusPill[data-status="failed"], .statusPill[data-status="error"] { --tone: var(--danger); }
+.statusPill[data-status="offline"] { --tone: var(--faint); }
+.statusDot { width: 7px; height: 7px; border-radius: 999px; background: var(--tone); }
+
+/* Progress: bar + horizontal stepper */
+.percent { color: var(--muted); font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.progressTrack { height: 6px; overflow: hidden; border-radius: 999px; background: var(--hover); }
+.progressFill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--accent), var(--accent-2));
+  transition: width 300ms ease;
+}
+
+.steps { display: grid; margin: 2px 0 0; padding: 0; list-style: none; }
+.step {
+  --tone: var(--faint);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+}
+/* Connector from this marker to the next one. */
+.step:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: calc(50% + 14px);
+  right: calc(-50% + 14px);
+  height: 2px;
+  border-radius: 2px;
+  background: var(--line);
+}
+.step[data-status="done"]:not(:last-child)::after { background: var(--ok); }
+.step[data-status="active"] { --tone: var(--accent); }
+.step[data-status="done"] { --tone: var(--ok); }
+.step[data-status="failed"] { --tone: var(--danger); }
+.stepMarker {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 1.5px solid color-mix(in srgb, var(--tone) 55%, transparent);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--tone);
+}
+.step[data-status="done"] .stepMarker { border-color: var(--tone); background: var(--tone); color: #fff; }
+.stepLabel {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 11.5px;
+  font-weight: 550;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.step[data-status="pending"] .stepLabel { color: var(--muted); }
+
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Chat: takes all remaining height in the right column */
+.chat { gap: 0; padding: 0; min-height: 420px; }
+.chatHeader { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.chatBuilding {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background-color: var(--page);
+  background-image: radial-gradient(circle, rgb(109 74 224 / 0.18) 1px, transparent 1.4px);
+  background-size: 10px 10px;
+}
+.chatBuildingSvg.chatBuildingSvg { width: 36px; height: 36px; max-height: none; }
+.chatName { flex: 1; min-width: 0; margin: 0; overflow: hidden; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; text-overflow: ellipsis; white-space: nowrap; }
+
+.chatLog {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 260px;
+  max-height: 480px;
+  padding: 14px;
+  overflow-y: auto;
+}
+.chatEmpty {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--faint);
+  font-size: 13px;
+  text-align: center;
+}
+.chatEmpty p { margin: 0; }
+.bubble {
+  max-width: 85%;
+  margin: 0;
+  padding: 9px 12px;
+  border-radius: 14px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.bubble[data-role="user"] { align-self: flex-end; border-bottom-right-radius: 4px; background: var(--accent); color: #fff; }
+.bubble[data-role="agent"] { align-self: flex-start; border-bottom-left-radius: 4px; background: var(--hover); }
+
+.composer { display: flex; gap: 8px; padding: 10px 12px; border-top: 1px solid var(--line); }
+.composerInput {
+  flex: 1;
+  min-width: 0;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--page);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+}
+.composerInput::placeholder { color: var(--faint); }
+.sendButton {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 10px;
+  background: var(--accent);
+  color: #fff;
+  cursor: pointer;
+}
+.sendButton:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ---------- Header actions ---------- */
+.headerActions { display: flex; flex: none; align-items: center; gap: 8px; }
+.ghostButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ghostButton:hover:not(:disabled) { background: var(--hover); }
+.ghostButton:disabled { color: var(--faint); cursor: not-allowed; }
+@media (max-width: 520px) { .ghostButton { width: 34px; padding: 0; justify-content: center; font-size: 0; } }
+
+/* ---------- City extras: agent count, notice ---------- */
+.countChip {
+  flex: none;
+  padding: 3px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.notice {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(520px, calc(100% - 24px));
+  padding: 8px 8px 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--danger) 30%, transparent);
+  border-radius: 10px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(20 16 40 / 0.14);
+  color: var(--ink);
+  font-size: 13px;
+  transform: translateX(-50%);
+}
+.notice > svg { flex: none; color: var(--danger); }
+.notice button { display: grid; place-items: center; flex: none; width: 24px; height: 24px; border: 0; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; }
+.notice button:hover { background: var(--hover); }
+
+/* ---------- Building popover ---------- */
+.popCard {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 18px 48px rgb(20 16 40 / 0.2), 0 2px 6px rgb(20 16 40 / 0.08);
+  color: var(--ink);
+}
+.popHeader { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.popIcon { display: grid; place-items: center; flex: none; width: 38px; height: 38px; border-radius: 11px; color: #fff; }
+.popTitle { flex: 1; min-width: 0; }
+.popName { margin: 0; overflow: hidden; font-size: 15px; font-weight: 700; letter-spacing: -0.01em; text-overflow: ellipsis; white-space: nowrap; }
+.popMeta { margin: 1px 0 0; color: var(--muted); font-size: 12px; }
+.popClose { display: grid; place-items: center; flex: none; align-self: flex-start; width: 28px; height: 28px; border: 0; border-radius: 8px; background: transparent; color: var(--muted); cursor: pointer; }
+.popClose:hover { background: var(--hover); color: var(--ink); }
+.popRow { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.popKey { color: var(--muted); font-size: 12px; font-weight: 600; }
+.popProgress { display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 10px; background: var(--page); }
+.popActivity, .popEmpty { margin: 0; color: var(--muted); font-size: 12px; }
+.popTask {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: 12.5px;
+  line-height: 1.5;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+.popActions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.popEdit, .popDelete, .secondaryButton, .dangerButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.popEdit:hover, .secondaryButton:hover { background: var(--hover); }
+.popDelete { border-color: color-mix(in srgb, var(--danger) 35%, var(--line)); color: var(--danger); }
+.popDelete:hover { background: color-mix(in srgb, var(--danger) 8%, transparent); }
+.dangerButton { border-color: var(--danger); background: var(--danger); color: #fff; }
+.dangerButton:hover { background: color-mix(in srgb, var(--danger) 88%, #000); }
+.secondaryButton:disabled, .dangerButton:disabled { opacity: 0.6; cursor: not-allowed; }
+
+/* ---------- Delete confirmation ---------- */
+.confirm {
+  box-sizing: border-box;
+  margin: auto; /* Tailwind preflight zeroes the native dialog centering */
+  width: min(420px, calc(100vw - 32px));
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: 0 32px 100px rgb(24 17 44 / 0.3);
+}
+.confirm::backdrop { background: rgb(34 34 56 / 0.45); backdrop-filter: blur(4px); }
+.confirm h2 { margin: 14px 0 6px; font-size: 18px; font-weight: 700; letter-spacing: -0.01em; overflow-wrap: anywhere; }
+.confirm p { margin: 0; color: var(--muted); font-size: 13.5px; line-height: 1.55; }
+.confirmIcon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 12px; background: var(--accent-soft); color: var(--accent); }
+.confirmIcon[data-tone="danger"] { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
+.confirmButton { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 34px; padding: 0 14px; border: 0; border-radius: 9px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.confirmButton:disabled { opacity: 0.6; cursor: not-allowed; }
+.confirm .confirmError { margin-top: 12px; color: var(--danger); font-weight: 600; }
+.confirmActions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+
+/* ---------- Focus / a11y ---------- */
+.primaryButton:focus-visible, .sendButton:focus-visible, .composerInput:focus-visible,
+.popEdit:focus-visible, .popDelete:focus-visible, .ghostButton:focus-visible, .confirmButton:focus-visible, .popClose:focus-visible, .secondaryButton:focus-visible, .dangerButton:focus-visible, .notice button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spin { animation: none; }
+  .progressFill { transition: none; }
+}
+
+/* ---------- Desktop: fit the viewport so the page itself never scrolls ----------
+   Kept last so it overrides the base sizes above. Subtracts the shell header and
+   the shell's vertical content padding (28px × 2). The map and chat absorb the
+   remaining height; only the chat log scrolls internally. */
+@media (min-width: 1180px) {
+  .layout {
+    grid-template-columns: minmax(0, 2fr) minmax(340px, 1fr);
+    height: calc(100dvh - var(--header-h) - 56px);
+    min-height: 600px;
+  }
+  .primary, .secondary { min-height: 0; }
+  .cityFrame { flex: 1; height: auto; min-height: 0; }
+  .chat { flex: 1; min-height: 0; }
+  .chatLog { max-height: none; min-height: 0; }
+}
+
+/* ---------- Agent runtime: live task, chat status, AI settings ---------- */
+.popWide { grid-column: 1 / -1; }
+.taskLine { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.taskTitle { margin: 0; overflow: hidden; color: var(--ink); font-size: 12.5px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+.taskCancel {
+  display: inline-flex; flex: none; align-items: center; gap: 5px; height: 26px; padding: 0 9px;
+  border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--ink);
+  font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.taskCancel:hover:not(:disabled) { background: var(--hover); }
+.taskCancel:disabled { opacity: 0.6; cursor: not-allowed; }
+.taskActivity { margin: 0; overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.taskActivity[data-status="failed"] { color: var(--danger); white-space: normal; }
+.percent[data-status="failed"] { color: var(--danger); }
+.chatSettings {
+  display: grid; flex: none; place-items: center; width: 30px; height: 30px; margin-left: auto;
+  border: 1px solid var(--line); border-radius: 9px; background: var(--surface); color: var(--muted); cursor: pointer;
+}
+.chatSettings:hover { background: var(--hover); color: var(--ink); }
+/* Cloud computer button in the chat header; when present it takes the auto margin, so settings sit next to it. */
+.chatComputer {
+  position: relative; display: grid; flex: none; place-items: center; width: 30px; height: 30px; margin-left: auto;
+  border: 1px solid var(--line); border-radius: 9px; background: var(--surface); color: var(--muted); cursor: pointer;
+}
+.chatComputer + .chatSettings { margin-left: 0; }
+.chatComputer:hover { background: var(--hover); color: var(--ink); }
+.chatComputer[data-live] { border-color: color-mix(in srgb, var(--ok) 45%, var(--line)); color: var(--ok); }
+.chatComputer[data-live]::after {
+  content: ""; position: absolute; top: -3px; right: -3px; width: 8px; height: 8px; border: 2px solid var(--surface); border-radius: 999px; background: var(--ok);
+}
+.chatComputer:focus-visible, .popComputerButton:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.popComputer { display: flex; flex-direction: column; gap: 6px; }
+.popComputerButton {
+  display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--surface); color: var(--ink); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.popComputerButton:hover { background: var(--hover); }
+.statusPill[data-status="waiting"] { --tone: #f0a020; }
+.bubble { white-space: pre-wrap; }
+/* Agent replies are Markdown: block elements handle their own spacing, and long content may use the width. */
+.bubble[data-role="agent"] { max-width: 92%; white-space: normal; }
+.turn { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.turn[data-role="user"] { align-items: flex-end; }
+.turn[data-role="agent"] { align-items: flex-start; }
+.bubble[data-pending] { min-width: 44px; }
+.chatStatus { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; margin: 0; color: var(--muted); font-size: 12px; }
+.chatError { margin: 0; padding: 8px 10px; border-radius: 10px; background: color-mix(in srgb, var(--danger) 10%, transparent); color: var(--danger); font-size: 12.5px; font-weight: 600; }
+.chatMore {
+  display: inline-flex; flex: none; align-items: center; align-self: center; gap: 6px; height: 26px; padding: 0 10px;
+  border: 1px solid var(--line); border-radius: 999px; background: transparent; color: var(--muted); font-size: 12px; font-weight: 600; cursor: pointer;
+}
+.chatMore:hover:not(:disabled) { color: var(--ink); }
+.chatMore:disabled { cursor: progress; }
+.chatMore:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.composerInput:disabled { opacity: 0.6; cursor: not-allowed; }
+.taskCancel:focus-visible, .chatSettings:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* ---------- Clear chat, attachments, queue ---------- */
+/* Clear chat sits first in the header's button group and takes the auto margin; the others follow it. */
+.chatClear {
+  display: grid; flex: none; place-items: center; width: 30px; height: 30px; margin-left: auto;
+  border: 1px solid var(--line); border-radius: 9px; background: var(--surface); color: var(--muted); cursor: pointer;
+}
+.chatClear:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+.chatClear:disabled { opacity: 0.45; cursor: not-allowed; }
+.chatClear ~ .chatComputer, .chatClear ~ .chatSettings { margin-left: 0; }
+.chatHint { color: var(--faint); font-size: 11.5px; }
+.chat[data-dragging] { outline: 2px dashed var(--accent); outline-offset: -4px; }
+
+.attachButton {
+  display: grid; flex: none; place-items: center; width: 40px; height: 40px;
+  border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--muted); cursor: pointer;
+}
+.attachButton:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+.attachButton:disabled { opacity: 0.45; cursor: not-allowed; }
+.attachments { display: flex; flex-wrap: wrap; gap: 6px; margin: 0; padding: 8px 12px 0; border-top: 1px solid var(--line); list-style: none; }
+.attachments + .composer { border-top: 0; }
+.attachment {
+  display: inline-flex; align-items: center; gap: 5px; max-width: 100%; height: 26px; padding: 0 4px 0 8px;
+  border: 1px solid var(--line); border-radius: 999px; background: var(--hover); color: var(--ink); font-size: 12px; font-weight: 600;
+}
+.attachment[data-state="uploading"] { color: var(--muted); }
+.attachment[data-state="failed"] { border-color: color-mix(in srgb, var(--danger) 45%, var(--line)); color: var(--danger); }
+.attachmentName { min-width: 0; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attachment button {
+  display: grid; flex: none; place-items: center; width: 18px; height: 18px; padding: 0;
+  border: 0; border-radius: 999px; background: transparent; color: inherit; cursor: pointer;
+}
+.attachment button:hover { background: color-mix(in srgb, var(--ink) 10%, transparent); }
+.sendButton[data-variant="stop"] { background: var(--ink); }
+
+.queue { display: flex; flex-direction: column; gap: 6px; padding-top: 8px; border-top: 1px dashed var(--line); }
+.queueHeading { display: inline-flex; align-items: center; gap: 6px; margin: 0; color: var(--muted); font-size: 12px; font-weight: 650; }
+.queueList { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.queueItem { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 12.5px; }
+.queueIndex {
+  display: grid; flex: none; place-items: center; width: 18px; height: 18px; border-radius: 999px;
+  background: var(--hover); color: var(--muted); font-size: 11px; font-weight: 700;
+}
+.queueTitle { flex: 1; min-width: 0; overflow: hidden; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
+.queueActivity { color: var(--muted); }
+.queueRemove {
+  display: grid; flex: none; place-items: center; width: 22px; height: 22px; padding: 0;
+  border: 1px solid var(--line); border-radius: 7px; background: var(--surface); color: var(--muted); cursor: pointer;
+}
+.queueRemove:hover:not(:disabled) { background: var(--hover); color: var(--ink); }
+.chatClear:focus-visible, .attachButton:focus-visible, .attachment button:focus-visible, .queueRemove:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }

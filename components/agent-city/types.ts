@@ -4,12 +4,36 @@ import type { RoadPoint, RoadRoute } from './road-geometry';
 export const buildingThemes = ['lavender', 'mint', 'peach', 'sky', 'rose', 'white'] as const;
 export const buildingIcons = ['search', 'doc', 'wave', 'play', 'image', 'rocket', 'sparkle'] as const;
 export const roofItems = ['tree', 'units', 'dish', 'solar', 'garden'] as const;
-export type AgentStatus = 'idle' | 'working' | 'error' | 'offline';
+/** Office architectures. `studio` is the glass studio; the others are landmark designs for specific kinds of work. */
+export const agentDesigns = ['studio', 'observatory', 'broadcast', 'gallery', 'cinema', 'dispatch'] as const;
+export type AgentDesign = typeof agentDesigns[number];
+export const agentDesignInfo: Record<AgentDesign, { label: string; description: string }> = {
+  studio: { label: 'Glass studio', description: 'Open studio with a visible interior' },
+  observatory: { label: 'Observatory lab', description: 'Lab with a rooftop telescope dome' },
+  broadcast: { label: 'Broadcast studio', description: 'Equalizer wall, ON AIR tower and mast' },
+  gallery: { label: 'Media gallery', description: 'Stacked gallery with art and a camera' },
+  cinema: { label: 'Cinema', description: 'Big screen, marquee lights and reels' },
+  dispatch: { label: 'Dispatch tower', description: 'Clock tower, calendar wall and rocket' },
+};
+/** Sign/accent colour for each palette, matching the renderer. */
+export const themeAccent: Record<typeof buildingThemes[number] | 'gold', string> = {
+  lavender: '#7c4dea', mint: '#12a38a', peach: '#f0703a', sky: '#3b7bf0', rose: '#e04f8f', white: '#2d3340', gold: '#c08a1e',
+};
+/**
+ * `working`/`waiting` describe a running task (`waiting`: the agent needs the user, e.g. to sign in or choose an option);
+ * `completed`/`failed` describe the agent's last task; `error`/`offline` describe the agent itself.
+ */
+export const agentStatuses = ['idle', 'working', 'waiting', 'completed', 'failed', 'error', 'offline'] as const;
+export type AgentStatus = typeof agentStatuses[number];
 export interface Agent {
   id: string;
   name: string;
   task: string;
   status: AgentStatus;
+  /** 0–100 while a task is running; display data only. */
+  progress?: number | null;
+  /** Short description of the current step, shown with progress. */
+  activity?: string | null;
 }
 interface BuildingBase {
   id: string;
@@ -20,6 +44,7 @@ interface BuildingBase {
 }
 export interface AgentOffice extends BuildingBase {
   type: 'agent';
+  design?: AgentDesign;
   theme?: typeof buildingThemes[number];
   icon?: typeof buildingIcons[number];
   floors?: 1 | 2 | 3 | 4;
@@ -58,3 +83,10 @@ export interface CityLink extends RoadStyle {
 }
 export interface CityConfig { buildings: CityBuilding[]; links: CityLink[] }
 export const project = (x: number, y: number) => ({ x: (x - y) * Math.cos(Math.PI / 6), y: (x + y) * .5 });
+
+/** Short building-sign text: drops a trailing "Agent" and keeps the first part of "A/B" names (max 16 characters). */
+export function signLabel(name: string): string {
+  let label = name.trim().replace(/\s+agent$/i, '') || name.trim();
+  if (label.length > 16 && label.includes('/')) label = label.split('/')[0].trim();
+  return label.length > 16 ? `${label.slice(0, 15)}…` : label;
+}

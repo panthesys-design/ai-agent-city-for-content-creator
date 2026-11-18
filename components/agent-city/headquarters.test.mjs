@@ -82,3 +82,21 @@ test('legacy campus and agent offices remain renderable', () => {
     assert.ok(!/NaN|Infinity|undefined/.test(svg));
   }
 });
+test('every agent design renders finite SVG with resolved resources for all palettes and floors', () => {
+  const designs = ['studio', 'observatory', 'broadcast', 'gallery', 'cinema', 'dispatch'];
+  const outputs = new Set();
+  for (const design of designs) for (const theme of ['lavender', 'mint', 'peach', 'sky', 'rose', 'white'])
+    for (const floors of [1, 2, 3, 4]) for (const trees of [true, false]) {
+      const svg = render({ ...base, type: 'agent', name: 'Script Writer Agent', label: 'Script Writer', design, theme, floors, trees, icon: 'doc' });
+      assert.ok(svg.includes('<polygon'));
+      assert.ok(!/NaN|Infinity|undefined/.test(svg), `${design}/${theme}/${floors}`);
+      const ids = new Set([...svg.matchAll(/id="([^"]+)"/g)].map(m => m[1]));
+      for (const [, id] of svg.matchAll(/url\(#([^)]*)\)/g)) assert.ok(ids.has(id), `Missing resource ${id} in ${design}`);
+      if (theme === 'sky' && floors === 1 && trees) outputs.add(svg.replace(/>Script Writer</, ''));
+    }
+  assert.equal(outputs.size, designs.length, 'each design draws distinct geometry');
+  // The sign uses the label override, not the full name.
+  assert.ok(render({ ...base, type: 'agent', name: 'Long Name Agent', label: 'Short' }).includes('>Short<'));
+  // Unknown designs fall back to the studio rather than failing.
+  assert.ok(!/NaN|undefined/.test(render({ ...base, type: 'agent', name: 'X', design: 'castle' })));
+});
